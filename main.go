@@ -239,7 +239,7 @@ func do() {
 			log.Fatal(err)
 		}
 	}
-	run0("sh", "-c", "rm -rf inline Makefile otto/ README.* registry/README.* underscore/README.* DESIGN.*")
+	run0("sh", "-c", "rm -rf inline Makefile otto/ README.* registry/README.* underscore/README.* DESIGN.* .gitignore")
 	run0("sh", "-c", "sed -i '1,/*\\// d' js.go")
 	run0("sh", "-c", "sed -i 's/Otto\\b/Runtime/g' *.go")
 	run0("sh", "-c", "find -name \\*.go -exec sed -i s/Otto/js/ {} \\;")
@@ -253,7 +253,7 @@ func do() {
 	run0("sh", "-c", fmt.Sprintf("find */ -name \\*.go -exec sed -i 's|\"%s|\"%s|' {} \\;", importPath, newImpPath))
 	run0("sh", "-c", "find -name \\*.go -exec sed -i 's/\\([^/].*\\)otto/\\1vm/' {} \\;")
 	run0("sh", "-c", "find -name \\*.go -exec sed -i 's/\\([^/].*\\)otto/\\1vm/' {} \\;")
-	run0("sh", "-c", "sed -i 's/OTTO/otto/g' *.go")
+	run0("sh", "-c", "find -name \\*.go -exec sed -i 's/OTTO/otto/' {} \\;")
 	a := strings.Split(vlic, "\n")
 	vlic := strings.Join(a, "\n  ")
 	if err = ioutil.WriteFile("doc.go", []byte(fmt.Sprintf(doc, vlic)), 0666); err != nil {
