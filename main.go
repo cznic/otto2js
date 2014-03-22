@@ -15,16 +15,16 @@ import (
 
 const (
 	importPath = "github.com/robertkrimen/otto"
-	license    = `This is a fork of Robert Krimen's 'otto' project[0].
+	license    = `This is a fork of Robert Krimen's 'OTTO' project[0].
 
 	Copyright (c) 2012, 2013, 2014 Robert Krimen. See the LICENSE file.
 
-Minor modifications produced automatically by otto2js[0] at
+Minor modifications produced automatically by OTTO2js[0] at
 
 	%s.
 
-[0]: http://github.com/robertkrimen/otto
-[1]: http://github.com/cznic/otto2js
+[0]: http://github.com/robertkrimen/OTTO
+[1]: http://github.com/cznic/OTTO2js
    
 `
 	doc = `/*
@@ -239,9 +239,10 @@ func do() {
 			log.Fatal(err)
 		}
 	}
-	run0("sh", "-c", "rm -rf inline Makefile otto/ README.* registry/README.* underscore/README.*")
+	run0("sh", "-c", "rm -rf inline Makefile otto/ README.* registry/README.* underscore/README.* DESIGN.*")
 	run0("sh", "-c", "sed -i '1,/*\\// d' js.go")
 	run0("sh", "-c", "sed -i 's/Otto\\b/Runtime/g' *.go")
+	run0("sh", "-c", "find -name \\*.go -exec sed -i s/Otto/js/ {} \\;")
 	run0("sh", "-c", "sed -i 's|\\(//.*:= \\)Runtime\\.|\\1runtime.|' *.go")
 	run0("sh", "-c", "sed -i '/^func (self FunctionCall)/,$ s/self/f/g' type_function.go")
 	run0("sh", "-c", "sed -i '/^func (self Object)/,$ s/self/o/g' js.go")
@@ -249,6 +250,10 @@ func do() {
 	run0("sh", "-c", "sed -i 's/\\bself\\b/value/g' value.go")
 	run0("sh", "-c", "sed -i 's/otto\\/JavaScript/js\\/JavaScript/g' js.go value.go")
 	run0("sh", "-c", "sed -i 's/otto\\.Value/js.Value/g' value.go")
+	run0("sh", "-c", fmt.Sprintf("find */ -name \\*.go -exec sed -i 's|\"%s|\"%s|' {} \\;", importPath, newImpPath))
+	run0("sh", "-c", "find -name \\*.go -exec sed -i 's/\\([^/].*\\)otto/\\1vm/' {} \\;")
+	run0("sh", "-c", "find -name \\*.go -exec sed -i 's/\\([^/].*\\)otto/\\1vm/' {} \\;")
+	run0("sh", "-c", "sed -i 's/OTTO/otto/g' *.go")
 	a := strings.Split(vlic, "\n")
 	vlic := strings.Join(a, "\n  ")
 	if err = ioutil.WriteFile("doc.go", []byte(fmt.Sprintf(doc, vlic)), 0666); err != nil {
@@ -257,6 +262,7 @@ func do() {
 }
 
 func main() {
+	rm := flag.Bool("rm", false, "remove current repository content except for dot files")
 	log.SetFlags(0)
 	flag.Parse()
 
@@ -274,7 +280,14 @@ func main() {
 	for _, v := range matches {
 		fn := filepath.Base(v)
 		if !strings.HasPrefix(fn, ".") {
-			log.Fatalf("non empty wd: %s", fn)
+			switch *rm {
+			case true:
+				if err = os.RemoveAll(v); err != nil {
+					log.Fatal(err)
+				}
+			default:
+				log.Fatalf("non empty wd: %s", fn)
+			}
 		}
 	}
 
