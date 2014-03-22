@@ -1,4 +1,4 @@
-.PHONY: all clean nuke
+.PHONY: all clean nuke todo
 
 all: editor
 	make todo
@@ -12,3 +12,6 @@ editor:
 
 nuke:
 	go clean -i
+
+todo:
+	grep -n TODO *

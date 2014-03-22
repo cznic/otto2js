@@ -27,6 +27,108 @@ Minor modifications produced automatically by OTTO2js[0] at
 [1]: http://github.com/cznic/OTTO2js
    
 `
+	diff = `
+
+diff --git console.go console.go
+index 4a10eba..dac7db8 100644
+--- console.go
++++ console.go
+@@ -15,7 +15,6 @@ package js
+ 
+ import (
+ 	"fmt"
+-	"os"
+ 	"strings"
+ )
+ 
+@@ -28,12 +27,12 @@ func formatForConsole(argumentList []Value) string {
+ }
+ 
+ func builtinConsole_log(call FunctionCall) Value {
+-	fmt.Fprintln(os.Stdout, formatForConsole(call.ArgumentList))
++	fmt.Fprintln(call.runtime.stdout, formatForConsole(call.ArgumentList))
+ 	return UndefinedValue()
+ }
+ 
+ func builtinConsole_error(call FunctionCall) Value {
+-	fmt.Fprintln(os.Stdout, formatForConsole(call.ArgumentList))
++	fmt.Fprintln(call.runtime.stderr, formatForConsole(call.ArgumentList))
+ 	return UndefinedValue()
+ }
+ 
+diff --git global.go global.go
+index 7794ea2..7018544 100644
+--- global.go
++++ global.go
+@@ -14,6 +14,7 @@
+ package js
+ 
+ import (
++	"os"
+ 	"strconv"
+ 	Time "time"
+ )
+@@ -62,6 +63,7 @@ var (
+ func newContext() *_runtime {
+ 
+ 	o := &_runtime{}
++	o.stdout, o.stderr = os.Stdout, os.Stderr
+ 
+ 	o.GlobalEnvironment = o.newObjectEnvironment(nil, nil)
+ 	o.GlobalObject = o.GlobalEnvironment.Object
+diff --git js.go js.go
+index cfa06c2..beec430 100644
+--- js.go
++++ js.go
+@@ -3,6 +3,7 @@ package js
+ import (
+ 	"fmt"
+ 	"github.com/cznic/js/registry"
++	"io"
+ 	"strings"
+ )
+ 
+@@ -29,6 +30,18 @@ func New() *Runtime {
+ 	return o
+ }
+ 
++// Stdout returns the io.Writer console.{log,debug,info} is connected to.
++func (vm *Runtime) Stdout() io.Writer { return vm.runtime.stdout }
++
++// Stderr returns the io.Writer console.{error,warn} is connected to.
++func (vm *Runtime) Stderr() io.Writer { return vm.runtime.stderr }
++
++// SetStdout sets the io.Writer console.{log,debug,info} is connected to.
++func (vm *Runtime) SetStdout(w io.Writer) { vm.runtime.stdout = w }
++
++// SetStderr sets the io.Writer console.{error,warn} is connected to.
++func (vm *Runtime) SetStderr(w io.Writer) { vm.runtime.stderr = w }
++
+ func (vm *Runtime) clone() *Runtime {
+ 	o := &Runtime{
+ 		runtime: vm.runtime.clone(),
+diff --git runtime.go runtime.go
+index 62842a4..1cc8a20 100644
+--- runtime.go
++++ runtime.go
+@@ -14,6 +14,7 @@
+ package js
+ 
+ import (
++	"io"
+ 	"reflect"
+ 	"strconv"
+ )
+@@ -65,6 +66,8 @@ type _runtime struct {
+ 	eval *_object // The builtin eval, for determine indirect versus direct invocation
+ 
+ 	Runtime *Runtime
++
++	stdout, stderr io.Writer
+ }
+ 
+ func (o *_runtime) EnterGlobalExecutionContext() {
+`
 	doc = `/*
 
 Package js implements a JavaScript interpreter written in pure Go.
@@ -257,12 +359,34 @@ func do() {
 	run0("sh", "-c", "find -name \\*.go -exec sed -i 's|\\. \"github.com\\/robertkrimen\\/terst\"|. \"github.com/cznic/js/terst\"|' {} \\;")
 	run0("sh", "-c", "find -name \\*.go -exec sed -i 's/\\bself\\b/o/g' {} \\;")
 	run0("sh", "-c", "find -name \\*.go -exec sed -i 's/\\bself\\([0-9]\\)\\b/o\\1/g' {} \\;")
-	run0("sh", "-c", "find -name \\*.go -exec sed -i 's/OTTO/otto/' {} \\;")
 	a := strings.Split(vlic, "\n")
 	vlic := strings.Join(a, "\n  ")
 	if err = ioutil.WriteFile("doc.go", []byte(fmt.Sprintf(doc, vlic)), 0666); err != nil {
 		log.Fatal(err)
 	}
+
+	run0("sh", "-c", "find -name \\*.go -exec sed -i 's/OTTO/otto/' {} \\;")
+	run("go fmt")
+	tmp, err := ioutil.TempFile("", "otto2js-")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	n, err := tmp.WriteString(diff)
+	if n != len(diff) {
+		log.Fatal(err)
+	}
+
+	if err = tmp.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	s := ""
+	if *oVerborse {
+		s = " --verbose"
+	}
+	run0("sh", "-c", fmt.Sprintf("patch -p0%s < %s", s, tmp.Name()))
+	os.Remove(tmp.Name())
 }
 
 func main() {
