@@ -19,7 +19,7 @@ const (
 
 	Copyright (c) 2012, 2013, 2014 Robert Krimen. See the LICENSE file.
 
-Minor modifications produced automatically by OTTO2js[0] at
+Minor modifications produced automatically by OTTO2js[1] at
 
 	%s.
 
@@ -93,16 +93,16 @@ index cfa06c2..beec430 100644
  }
  
 +// Stdout returns the io.Writer console.{log,debug,info} is connected to.
-+func (vm *Runtime) Stdout() io.Writer { return vm.runtime.stdout }
++func (r *Runtime) Stdout() io.Writer { return r.runtime.stdout }
 +
 +// Stderr returns the io.Writer console.{error,warn} is connected to.
-+func (vm *Runtime) Stderr() io.Writer { return vm.runtime.stderr }
++func (r *Runtime) Stderr() io.Writer { return r.runtime.stderr }
 +
 +// SetStdout sets the io.Writer console.{log,debug,info} is connected to.
-+func (vm *Runtime) SetStdout(w io.Writer) { vm.runtime.stdout = w }
++func (r *Runtime) SetStdout(w io.Writer) { r.runtime.stdout = w }
 +
 +// SetStderr sets the io.Writer console.{error,warn} is connected to.
-+func (vm *Runtime) SetStderr(w io.Writer) { vm.runtime.stderr = w }
++func (r *Runtime) SetStderr(w io.Writer) { r.runtime.stderr = w }
 +
  func (vm *Runtime) clone() *Runtime {
  	o := &Runtime{
@@ -131,7 +131,7 @@ index 62842a4..1cc8a20 100644
 `
 	doc = `/*
 
-Package js implements a JavaScript interpreter written in pure Go.
+Package js implements a JavaScript interpreter.
 
   %s
 
@@ -359,6 +359,7 @@ func do() {
 	run0("sh", "-c", "find -name \\*.go -exec sed -i 's|\\. \"github.com\\/robertkrimen\\/terst\"|. \"github.com/cznic/js/terst\"|' {} \\;")
 	run0("sh", "-c", "find -name \\*.go -exec sed -i 's/\\bself\\b/o/g' {} \\;")
 	run0("sh", "-c", "find -name \\*.go -exec sed -i 's/\\bself\\([0-9]\\)\\b/o\\1/g' {} \\;")
+	run0("sh", "-c", "find -name \\*.go -exec sed -i 's/\\bo-contained/self-contained/g' {} \\;")
 	a := strings.Split(vlic, "\n")
 	vlic := strings.Join(a, "\n  ")
 	if err = ioutil.WriteFile("doc.go", []byte(fmt.Sprintf(doc, vlic)), 0666); err != nil {
@@ -366,6 +367,7 @@ func do() {
 	}
 
 	run0("sh", "-c", "find -name \\*.go -exec sed -i 's/OTTO/otto/' {} \\;")
+	run0("sh", "-c", "find -name LICENSE -exec sed -i 's/OTTO/otto/' {} \\;")
 	run("go fmt")
 	tmp, err := ioutil.TempFile("", "otto2js-")
 	if err != nil {
